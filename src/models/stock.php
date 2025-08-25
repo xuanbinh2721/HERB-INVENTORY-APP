@@ -27,28 +27,46 @@ function product_stock($product_id){
 }
 
 /**
- * Tính giá vốn trung bình của sản phẩm
+ * Tính giá vốn trung bình của sản phẩm (tính đến thời điểm hiện tại)
  * @param int $product_id ID sản phẩm
+ * @param string $as_of_date Ngày tính đến (mặc định là ngày hiện tại)
  * @return float Giá vốn trung bình
  */
-function product_avg_cost($product_id){
+function product_avg_cost($product_id, $as_of_date = null){
     global $pdo;
     
     if(!$product_id || $product_id <= 0) {
         return 0;
     }
     
+    // Nếu không có ngày cụ thể, lấy ngày hiện tại
+    if(!$as_of_date) {
+        $as_of_date = date('Y-m-d');
+    }
+    
+    // Tính giá vốn trung bình dựa trên lịch sử nhập hàng đến ngày cụ thể
     $stmt = $pdo->prepare("
         SELECT 
             CASE 
-                WHEN SUM(qty) = 0 THEN 0 
-                ELSE ROUND(SUM(qty * unit_cost) / SUM(qty), 2) 
+                WHEN SUM(pi.qty) = 0 THEN 0 
+                ELSE ROUND(SUM(pi.qty * pi.unit_cost) / SUM(pi.qty), 2) 
             END as avg_cost 
-        FROM purchase_items 
-        WHERE product_id = ?
+        FROM purchase_items pi
+        JOIN purchases p ON pi.purchase_id = p.id
+        WHERE pi.product_id = ? AND p.purchase_date <= ?
     ");
-    $stmt->execute([$product_id]);
+    $stmt->execute([$product_id, $as_of_date]);
     return (float)($stmt->fetch()['avg_cost'] ?? 0);
+}
+
+/**
+ * Tính giá vốn trung bình của sản phẩm tại thời điểm bán hàng
+ * @param int $product_id ID sản phẩm
+ * @param string $sale_date Ngày bán hàng
+ * @return float Giá vốn trung bình tại thời điểm bán
+ */
+function product_avg_cost_at_sale($product_id, $sale_date){
+    return product_avg_cost($product_id, $sale_date);
 }
 
 /**

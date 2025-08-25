@@ -41,11 +41,24 @@ $itemsStmt = $pdo->prepare("
 $itemsStmt->execute([$from, $to]);
 $items = $itemsStmt->fetchAll();
 
-// Calculate COGS (Cost of Goods Sold)
+// Calculate COGS (Cost of Goods Sold) - using accurate cost at time of sale
 $cogs = 0.0;
 $cogs_details = [];
 foreach($items as $it) {
-    $avg_cost = product_avg_cost($it['product_id']);
+    // Get the sale date for this item
+    $sale_date_stmt = $pdo->prepare("
+        SELECT s.sale_date 
+        FROM sales s 
+        JOIN sale_items si ON s.id = si.sale_id 
+        WHERE si.product_id = ? AND si.qty = ? AND si.unit_price = ?
+        ORDER BY s.sale_date DESC 
+        LIMIT 1
+    ");
+    $sale_date_stmt->execute([$it['product_id'], $it['qty'], $it['unit_price']]);
+    $sale_date = $sale_date_stmt->fetch()['sale_date'] ?? date('Y-m-d');
+    
+    // Calculate average cost at the time of sale
+    $avg_cost = product_avg_cost($it['product_id'], $sale_date);
     $item_cogs = (float)$it['qty'] * (float)$avg_cost;
     $cogs += $item_cogs;
     
@@ -55,7 +68,8 @@ foreach($items as $it) {
         'sku' => $it['sku'],
         'qty' => $it['qty'],
         'avg_cost' => $avg_cost,
-        'total_cost' => $item_cogs
+        'total_cost' => $item_cogs,
+        'sale_date' => $sale_date
     ];
 }
 
