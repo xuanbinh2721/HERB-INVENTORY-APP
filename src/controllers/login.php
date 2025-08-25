@@ -23,7 +23,7 @@ include __DIR__ . '/../views/layout/header.php';
                 <i class="fas fa-leaf fa-3x text-primary"></i>
               </div>
               <h3 class="fw-bold text-dark mb-2">Herb Inventory</h3>
-              <p class="text-muted">Hệ thống quản lý kho dược liệu</p>
+              <p class="text-muted">Hệ thống quản lý kho </p>
             </div>
             
             <?php if(!empty($error)): ?>
