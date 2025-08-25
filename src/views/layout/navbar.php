@@ -1,7 +1,7 @@
 <?php $u = current_user(); ?>
 <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="/">
+    <a class="navbar-brand fw-bold" href="/?page=dashboard">
       <i class="fas fa-leaf me-2"></i>Herb Inventory
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
