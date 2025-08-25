@@ -82,6 +82,45 @@ if(($_GET['action']??'')==='delete' && isset($_GET['id'])){
     redirect('/?page=sales');
 }
 
+// Handle view sale details
+if(($_GET['action']??'')==='view' && isset($_GET['id'])){
+    $sale_id = (int)$_GET['id'];
+    
+    // Get sale header
+    $sale_stmt = $pdo->prepare("
+        SELECT s.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address
+        FROM sales s 
+        LEFT JOIN customers c ON s.customer_id = c.id
+        WHERE s.id = ?
+    ");
+    $sale_stmt->execute([$sale_id]);
+    $sale = $sale_stmt->fetch();
+    
+    if(!$sale) {
+        $error = "Không tìm thấy hóa đơn!";
+    } else {
+        // Get sale items
+        $items_stmt = $pdo->prepare("
+            SELECT si.*, p.name as product_name, p.sku, p.unit
+            FROM sale_items si
+            JOIN products p ON si.product_id = p.id
+            WHERE si.sale_id = ?
+            ORDER BY si.id
+        ");
+        $items_stmt->execute([$sale_id]);
+        $sale_items = $items_stmt->fetchAll();
+        
+        $title = 'Chi tiết hóa đơn #' . $sale_id;
+        include __DIR__ . '/../views/layout/header.php';
+        include __DIR__ . '/../views/layout/navbar.php';
+        
+        // Show sale details view
+        include __DIR__ . '/../views/sale_detail.php';
+        include __DIR__ . '/../views/layout/footer.php';
+        exit;
+    }
+}
+
 $title = 'Quản lý bán hàng';
 $rows = $pdo->query("
     SELECT s.*, c.name customer, COALESCE(SUM(si.qty*si.unit_price),0) total, COUNT(si.id) as item_count
@@ -176,11 +215,18 @@ include __DIR__ . '/../views/layout/navbar.php';
                 </td>
                 <td class="text-end fw-bold"><?= number_format($r['total'], 0) ?> VNĐ</td>
                 <td class="text-center">
-                  <a class="btn btn-outline-danger btn-sm btn-delete" 
-                     href="/?page=sales&action=delete&id=<?= $r['id'] ?>" 
-                     title="Xóa hóa đơn">
-                    <i class="fas fa-trash"></i>
-                  </a>
+                  <div class="btn-group btn-group-sm">
+                    <a class="btn btn-outline-primary" 
+                       href="/?page=sales&action=view&id=<?= $r['id'] ?>" 
+                       title="Xem chi tiết">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a class="btn btn-outline-danger btn-delete" 
+                       href="/?page=sales&action=delete&id=<?= $r['id'] ?>" 
+                       title="Xóa hóa đơn">
+                      <i class="fas fa-trash"></i>
+                    </a>
+                  </div>
                 </td>
               </tr>
             <?php endforeach; ?>

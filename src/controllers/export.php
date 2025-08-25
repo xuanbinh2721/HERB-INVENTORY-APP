@@ -148,6 +148,76 @@ switch($type){
     csv_download('revenue_report_' . $from . '_to_' . $to . '.csv', 
                 ['Cột 1', 'Cột 2', 'Cột 3', 'Cột 4', 'Cột 5', 'Cột 6'], $data);
     break;
+  case 'sale_detail':
+    $sale_id = (int)($_GET['id'] ?? 0);
+    if(!$sale_id) {
+        http_response_code(400); echo "Invalid sale ID";
+        exit;
+    }
+    
+    // Get sale header
+    $sale_stmt = $pdo->prepare("
+        SELECT s.*, c.name as customer_name, c.phone as customer_phone, c.address as customer_address
+        FROM sales s 
+        LEFT JOIN customers c ON s.customer_id = c.id
+        WHERE s.id = ?
+    ");
+    $sale_stmt->execute([$sale_id]);
+    $sale = $sale_stmt->fetch();
+    
+    if(!$sale) {
+        http_response_code(404); echo "Sale not found";
+        exit;
+    }
+    
+    // Get sale items
+    $items_stmt = $pdo->prepare("
+        SELECT si.*, p.name as product_name, p.sku, p.unit
+        FROM sale_items si
+        JOIN products p ON si.product_id = p.id
+        WHERE si.sale_id = ?
+        ORDER BY si.id
+    ");
+    $items_stmt->execute([$sale_id]);
+    $sale_items = $items_stmt->fetchAll();
+    
+    // Prepare data for CSV
+    $data = [];
+    
+    // Header
+    $data[] = ['CHI TIẾT HÓA ĐƠN BÁN HÀNG', '', '', '', '', '', ''];
+    $data[] = ['Số hóa đơn:', $sale['invoice_no'] ?: 'Không có', 'Ngày bán:', date('d/m/Y', strtotime($sale['sale_date'])), '', '', ''];
+    $data[] = ['Khách hàng:', $sale['customer_name'] ?: 'Khách lẻ', 'Điện thoại:', $sale['customer_phone'] ?: 'Không có', '', '', ''];
+    $data[] = ['Địa chỉ:', $sale['customer_address'] ?: 'Không có', '', '', '', '', ''];
+    if($sale['notes']) {
+        $data[] = ['Ghi chú:', $sale['notes'], '', '', '', '', ''];
+    }
+    $data[] = ['', '', '', '', '', '', ''];
+    
+    // Items table
+    $data[] = ['STT', 'Sản phẩm', 'SKU', 'Đơn vị', 'Số lượng', 'Đơn giá', 'Thành tiền'];
+    
+    $total_amount = 0;
+    foreach($sale_items as $index => $item) {
+        $item_total = $item['qty'] * $item['unit_price'];
+        $total_amount += $item_total;
+        $data[] = [
+            $index + 1,
+            $item['product_name'],
+            $item['sku'],
+            $item['unit'],
+            number_format($item['qty'], 3),
+            number_format($item['unit_price'], 0) . ' VNĐ',
+            number_format($item_total, 0) . ' VNĐ'
+        ];
+    }
+    
+    $data[] = ['', '', '', '', '', '', ''];
+    $data[] = ['', '', '', '', '', 'Tổng cộng:', number_format($total_amount, 0) . ' VNĐ'];
+    
+    csv_download('sale_detail_' . $sale_id . '.csv', 
+                ['Cột 1', 'Cột 2', 'Cột 3', 'Cột 4', 'Cột 5', 'Cột 6', 'Cột 7'], $data);
+    break;
   default:
     http_response_code(400); echo "Invalid export type";
 }
