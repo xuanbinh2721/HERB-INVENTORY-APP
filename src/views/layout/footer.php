@@ -7,7 +7,7 @@
       <div class="col-md-6">
         <p class="mb-0">
           <i class="fas fa-leaf me-2"></i>
-          <strong>Herb Inventory System</strong> - Hệ thống quản lý kho dược liệu
+          <strong>Herb Inventory System</strong> - Hệ thống quản lý kho
         </p>
       </div>
       <div class="col-md-6 text-md-end">

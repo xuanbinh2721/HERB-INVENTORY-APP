@@ -6,7 +6,7 @@ $config = require __DIR__ . '/../../config.php';
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Hệ thống quản lý kho và bán hàng dược liệu">
+  <meta name="description" content="Hệ thống quản lý kho và bán hàng">
   <meta name="author" content="Herb Inventory System">
   <title><?= h($config['app_name']) . (isset($title) ? (' - ' . h($title)) : '') ?></title>
   

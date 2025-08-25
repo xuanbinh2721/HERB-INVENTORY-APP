@@ -24,9 +24,12 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         }
         
         if(!isset($error)) {
+            // Handle customer_id - if 0, set to NULL for foreign key constraint
+            $customer_id = $customer > 0 ? $customer : null;
+            
             // Insert sale header
             $stmt = $pdo->prepare("INSERT INTO sales(sale_date,customer_id,invoice_no,notes) VALUES(?,?,?,?)");
-            $stmt->execute([$date, $customer, $inv, $notes]);
+            $stmt->execute([$date, $customer_id, $inv, $notes]);
             $sid = $pdo->lastInsertId();
 
             // Insert sale items with stock validation
