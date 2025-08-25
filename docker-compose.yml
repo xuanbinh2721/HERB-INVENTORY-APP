@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: herb_app
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-herb_shop}
+      DB_USER: ${DB_USER:-herb_user}
+      DB_PASS: ${DB_PASS:-herb_pass}
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASS: ${ADMIN_PASS:-admin123}
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    container_name: herb_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-herb_shop}
+      MYSQL_USER: ${DB_USER:-herb_user}
+      MYSQL_PASSWORD: ${DB_PASS:-herb_pass}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-rootpass}
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: herb_pma
+    restart: always
+    ports:
+      - "${PMA_PORT:-8081}:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USER:-herb_user}
+      PMA_PASSWORD: ${DB_PASS:-herb_pass}
+    depends_on:
+      - db
+
+volumes:
+  db_data:

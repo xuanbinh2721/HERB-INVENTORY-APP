@@ -1,0 +1,14 @@
+Options -Indexes
+RewriteEngine On
+RewriteBase /
+
+# Cho phép truy cập toàn bộ file PHP
+<FilesMatch "\.php$">
+    Require all granted
+</FilesMatch>
+
+# Nếu sử dụng routing
+<Directory "/var/www/html">
+    AllowOverride All
+    Require all granted
+</Directory>
